@@ -17,17 +17,15 @@ from phase1_mvp import config
 
 
 class CascadedChannel(TypedDict):
+
     """AP–RIS–Robot cascaded LoS channels.
 
     中文简释：级联信道三元组；后续配相与 SNR 主要使用 h_eff。
     """
-
     h_ar: np.ndarray  # (N,) AP → RIS
     h_ru: np.ndarray  # (N,) RIS → Robot
     h_eff: np.ndarray  # (N,) element-wise cascade h_ar * h_ru  （即 h_ar ⊙ h_ru）
 
-
-def path_loss_fs(d: np.ndarray | float, lambda_: float) -> np.ndarray | complex:
     """Far-field free-space complex path gain.
 
     Amplitude uses Friis factor ``λ / (4 π d)``; phase is ``exp(-j 2π d / λ)``
@@ -48,6 +46,8 @@ def path_loss_fs(d: np.ndarray | float, lambda_: float) -> np.ndarray | complex:
     complex or np.ndarray
         Complex path gain(s), same shape as ``d``.
     """
+def path_loss_fs(d: np.ndarray | float, lambda_: float) -> np.ndarray | complex:
+
     d_arr = np.asarray(d, dtype=float)
     if np.any(d_arr <= 0.0):
         raise ValueError("distance d must be strictly positive")
@@ -62,12 +62,6 @@ def path_loss_fs(d: np.ndarray | float, lambda_: float) -> np.ndarray | complex:
         return complex(gain)
     return gain
 
-
-def los_steering_vector(
-    tx_pos: np.ndarray,
-    rx_positions: np.ndarray,
-    lambda_: float,
-) -> np.ndarray:
     """LoS channel vector from a single TX to an RX array.
 
     Pure LoS, far-field phase model: each entry is the free-space path gain
@@ -90,6 +84,12 @@ def los_steering_vector(
     np.ndarray
         Complex vector of shape (N,).
     """
+def los_steering_vector(
+    tx_pos: np.ndarray,
+    rx_positions: np.ndarray,
+    lambda_: float,
+) -> np.ndarray:
+
     tx = np.asarray(tx_pos, dtype=float).reshape(3)
     rx = np.asarray(rx_positions, dtype=float)
     if rx.ndim != 2 or rx.shape[1] != 3:
@@ -100,26 +100,7 @@ def los_steering_vector(
     return path_loss_fs(distances, lambda_)
 
 
-def direct_ap_robot_channel(
-    ap_pos: np.ndarray,
-    robot_pos: np.ndarray,
-    lambda_: float,
-    *,
-    block_direct_link: bool | None = None,
-) -> complex:
     """AP→robot scalar LoS channel with optional NLoS blocking.
-
-    $$
-    h_{\\mathrm{direct}}
-      = \\alpha \\cdot \\frac{\\lambda}{4\\pi d}\\,
-        e^{-j 2\\pi d / \\lambda},
-    \\qquad
-    \\alpha =
-    \\begin{cases}
-      \\alpha_{\\mathrm{blk}} & \\text{if block_direct_link} \\\\
-      1 & \\text{otherwise}
-    \\end{cases}
-    $$
 
     中文简释：AP→机器人直连标量信道；可选遮挡衰减 α。
     要点：用于 no-RIS 基线 SNR；与级联 h_eff 独立。
@@ -135,6 +116,13 @@ def direct_ap_robot_channel(
         ``True`` → multiply by ``DIRECT_PATH_ATTENUATION_BLOCKED`` (very weak).
         ``False`` → open LoS (``α = DIRECT_PATH_ATTENUATION_OPEN``, default 1).
     """
+def direct_ap_robot_channel(
+    ap_pos: np.ndarray,
+    robot_pos: np.ndarray,
+    lambda_: float,
+    *,
+    block_direct_link: bool | None = None,
+) -> complex:
     # 步骤1：按开关选取直连衰减系数 α（遮挡 / 开通）
     if block_direct_link is None:
         block_direct_link = config.BLOCK_DIRECT_LINK
@@ -150,12 +138,7 @@ def direct_ap_robot_channel(
     return complex(alpha * path_loss_fs(dist, lambda_))
 
 
-def cascaded_channel(
-    ap_pos: np.ndarray,
-    ris_pos: np.ndarray,
-    robot_pos: np.ndarray,
-    lambda_: float,
-) -> CascadedChannel:
+
     """Build AP→RIS→Robot cascaded LoS channels.
 
     中文简释：构造 AP→RIS→机器人级联 LoS 信道。
@@ -170,6 +153,13 @@ def cascaded_channel(
         ``h_ru``: RIS → Robot, shape (N,)
         ``h_eff``: ``h_ar * h_ru`` (element-wise), for later ``φ^H h_eff``.
     """
+def cascaded_channel(
+    ap_pos: np.ndarray,
+    ris_pos: np.ndarray,
+    robot_pos: np.ndarray,
+    lambda_: float,
+) -> CascadedChannel:
+
     ris = np.asarray(ris_pos, dtype=float)
     if ris.ndim != 2 or ris.shape[1] != 3:
         raise ValueError("ris_pos must have shape (N, 3)")

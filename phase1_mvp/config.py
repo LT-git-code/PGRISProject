@@ -28,7 +28,7 @@ RIS_ELEMENT_SPACING_M: float = WAVELENGTH_M / 2.0
 # --- Geometry (meters, world frame) ---
 # 静态场景：AP 与 RIS 面板中心（世界坐标，米）
 POS_AP_M: tuple[float, float, float] = (0.0, 0.0, 10.0)
-POS_RIS_CENTER_M: tuple[float, float, float] = (50.0, 0.0, 10.0)
+POS_RIS_CENTER_M: tuple[float, float, float] = (50.0, 0.0, 13.5)
 
 # AP→robot direct path (Friis × α). α depends on BLOCK_DIRECT_LINK.
 # 直连衰减：True 时 NLoS/遮挡（弱直连），突出 RIS 级联链路增益
@@ -50,9 +50,9 @@ NUM_TIME_STEPS: int = 100
 ROBOT_Z_M: float = 1.0
 TRAJ_ARC_CX_M: float = 50.0
 TRAJ_ARC_CY_M: float = 5.0
-TRAJ_ARC_RADIUS_M: float = 28.0
-TRAJ_THETA_START_RAD: float = -0.6
-TRAJ_THETA_END_RAD: float = 0.6
+TRAJ_ARC_RADIUS_M: float = 35.0
+TRAJ_THETA_START_RAD: float = -1.0
+TRAJ_THETA_END_RAD: float = 1.0
 
 # Legacy aliases (kept for older stubs / docs)
 # 旧直线轨迹别名；自检/文档可能仍引用 ROBOT_Y_M

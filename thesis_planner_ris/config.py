@@ -76,7 +76,7 @@ STAGE2_SUMMARY_TXT: str = "stage2_summary.txt"
 
 # --- Stage-4 demo (planner labels; no ML) ---
 # Demo：故意用非零误差，便于可视化区分 p_plan 与 p_true
-DEMO_NUM_TIME_STEPS: int = 60
+DEMO_NUM_TIME_STEPS: int = 120
 DEMO_ERROR_STD_M: float = 0.5  # nonzero so p_plan / p_true are visually distinct
 DEMO_FPS: int = 8
 DEMO_DPI: int = 100

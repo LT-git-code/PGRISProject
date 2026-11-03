@@ -12,6 +12,7 @@ from __future__ import annotations
 import numpy as np
 
 
+
 def deterministic_phase(h_eff: np.ndarray) -> np.ndarray:
     """Unit-modulus RIS phases that maximize ``|φᴴ h_eff|``.
 

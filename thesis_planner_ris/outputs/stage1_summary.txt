@@ -5,7 +5,7 @@ Design phi from p_plan; evaluate SNR on p_true.
 Synthetic planned traj stands in for a motion planner (no ML).
 mean planner_pose_error_m     = 0.000000e+00
 mean snr_no_ris      [dB]      = -21.892
-mean snr_ideal_ris   [dB]      = -1.317
-mean snr_planner_ris [dB]      = -1.317
+mean snr_ideal_ris   [dB]      = -8.254
+mean snr_planner_ris [dB]      = -8.254
 max |ideal - planner| [dB]    = 0.000000e+00
 acceptance Ideal~Planner>>NoRIS = True
