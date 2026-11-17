@@ -1,14 +1,15 @@
-"""Synthetic motion-planner trajectories and execution with pose error.
+"""Planned trajectories and execution with pose error.
 
-These trajectories stand in for a real robot motion planner (e.g. MoveIt,
-nav stack). The main line never trains or loads an ML predictor; it only
-needs a planned pose sequence p_plan and an executed pose p_true.
+Supports:
+- ``TRAJ_SOURCE="arc"``: legacy synthetic arc in front of the RIS
+- ``TRAJ_SOURCE="grid_planner"``: 2D occupancy A* path (see motion_planner/)
 
-中文职责：合成运动规划器轨迹，并模拟执行误差得到 p_true。
-输入：时间步 T、执行误差标准差 sigma；
+The main line only needs p_plan / p_true; no ML predictor.
+
+中文职责：生成计划轨迹 p_plan，并模拟执行误差得到 p_true。
+输入：时间步 T、执行误差标准差 sigma、config.TRAJ_SOURCE；
 输出：成对的 p_plan、p_true，以及逐步 ||p_true - p_plan||_2。
 在流程中的位置：主线第一步——坐标/轨迹；其后 modes 用 p_plan 配相、p_true 评估。
-注意：无 ML；圆弧只是规划器输出的替身，不是神经网络预测。
 """
 
 from __future__ import annotations
@@ -31,32 +32,8 @@ class PlannerTrajectories(TypedDict):
     planner_pose_error_m: np.ndarray  # (T,) ||p_true - p_plan||_2 [m]
 
 
-def generate_planner_trajectory(T: int | None = None) -> np.ndarray:
-    """Generate a synthetic planned trajectory (arc in front of the RIS).
-
-    This is a stand-in for a motion planner: the arc is treated as the
-    known planned path the robot is commanded to follow. Geometry matches
-    phase1_mvp.simulation.generate_demo_trajectory so physics stay aligned.
-
-    中文简释：生成合成计划轨迹 p_plan（RIS 前方圆弧，与 phase1 演示同族）。
-    要点：几何对齐 phase1，保证后续物理层可比；此处只有计划位姿，无执行噪声。
-
-    Parameters
-    ----------
-    T :
-        Number of time steps. Defaults to config.NUM_TIME_STEPS.
-
-    Returns
-    -------
-    np.ndarray
-        p_plan of shape (T, 3) in meters.
-    """
-    if T is None:
-        T = config.NUM_TIME_STEPS
-    if T < 1:
-        raise ValueError("T must be >= 1")
-
-    # 步骤1：角度采样；步骤2：圆弧 -> (x,y,z) 作为已知计划路径
+def _generate_arc_trajectory(T: int) -> np.ndarray:
+    """Legacy synthetic arc (kept for对照 / TRAJ_SOURCE=arc)."""
     theta = np.linspace(
         config.TRAJ_THETA_START_RAD,
         config.TRAJ_THETA_END_RAD,
@@ -66,6 +43,35 @@ def generate_planner_trajectory(T: int | None = None) -> np.ndarray:
     y = config.TRAJ_ARC_CY_M + config.TRAJ_ARC_RADIUS_M * np.cos(theta)
     z = np.full(T, config.ROBOT_Z_M, dtype=float)
     return np.column_stack([x, y, z])
+
+
+def generate_planner_trajectory(
+    T: int | None = None,
+    *,
+    source: str | None = None,
+) -> np.ndarray:
+    """Generate planned trajectory p_plan of shape (T, 3).
+
+    ``source`` overrides ``config.TRAJ_SOURCE`` when given
+    (``"arc"`` or ``"grid_planner"``).
+
+    中文简释：按 TRAJ_SOURCE 生成计划轨迹；grid_planner 走占用栅格 A*。
+    """
+    if T is None:
+        T = config.NUM_TIME_STEPS
+    if T < 1:
+        raise ValueError("T must be >= 1")
+
+    src = (config.TRAJ_SOURCE if source is None else source).strip().lower()
+    if src == "arc":
+        return _generate_arc_trajectory(T)
+    if src == "grid_planner":
+        from Physical_model.motion_planner import plan_robot_trajectory
+
+        return plan_robot_trajectory(T)
+    raise ValueError(
+        f"unknown TRAJ_SOURCE={src!r}; expected 'arc' or 'grid_planner'"
+    )
 
 
 def execute_with_error(

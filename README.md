@@ -28,7 +28,7 @@ PGRISProject/
 | Phase design | `p_plan` | Build \(h_{\mathrm{eff}}(p_{\mathrm{plan}})\), set \(\varphi\) |
 | SNR evaluation | `p_true` | Always evaluate on \(h_{\mathrm{eff}}(p_{\mathrm{true}})\) or the direct link |
 
-`p_plan` is a **synthetic arc** standing in for MoveIt / a nav stack. No torch / `.pth` on the default path.
+`p_plan` comes from `config.TRAJ_SOURCE`: default **`grid_planner`** (2D occupancy A*), or legacy **`arc`**. No torch / `.pth` on the default path.
 
 ---
 
@@ -94,7 +94,8 @@ All artifacts go to `output/`.
 | `channel.py` | LoS cascade + direct link |
 | `beamforming.py` | Deterministic \(\varphi\) |
 | `snr.py` | SNR utilities |
-| `planner_traj.py` | Synthetic `p_plan` / `p_true` |
+| `planner_traj.py` | `p_plan` / `p_true` (`arc` or `grid_planner`) |
+| `motion_planner/` | Obstacles, occupancy grid, A*, traj resample |
 | `modes.py` | `no_ris` / `ideal_ris` / `planner_ris` |
 
 ### `Experiment_script/`

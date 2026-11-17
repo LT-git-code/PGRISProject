@@ -9,7 +9,7 @@ Colors (Stage-4 brief):
 输入：DemoFrame 列表；输出：Figure + FuncAnimation（或静态 preview PNG）。
 在流程中的位置：pipeline 之后的可视化；不改变配相/信道逻辑。
 注意：蓝色光锥仅示意（指向 p_plan），不是真实电磁波束图样。
-几何复用自 phase1_mvp.geometry（AP/RIS）。
+几何复用自 Physical_model.geometry（AP/RIS）；墙体来自 motion_planner.obstacles。
 """
 
 from __future__ import annotations
@@ -28,9 +28,58 @@ from Physical_model.geometry import (
     get_ris_center,
     get_ris_element_positions,
 )
+from Physical_model.motion_planner.obstacles import BoxObstacle, default_scene_obstacles
 
 from Physical_model import config
 from Experiment_script.demo.pipeline import DemoFrame, frames_to_arrays
+
+
+def _box_obstacle_faces(
+    ob: BoxObstacle,
+    *,
+    z_min: float = 0.0,
+    z_max: float | None = None,
+) -> list[list[np.ndarray]]:
+    """Build the 6 faces of an axis-aligned wall box for Poly3DCollection.
+
+    中文简释：把 2D AABB 挤出为 3D 墙体六面，供 Demo 绘制。
+    """
+    z0 = float(z_min)
+    z1 = float(config.ROBOT_Z_M + 8.0 if z_max is None else z_max)
+    x0, x1 = float(ob.xmin), float(ob.xmax)
+    y0, y1 = float(ob.ymin), float(ob.ymax)
+    # 8 corners
+    c000 = np.array([x0, y0, z0])
+    c100 = np.array([x1, y0, z0])
+    c110 = np.array([x1, y1, z0])
+    c010 = np.array([x0, y1, z0])
+    c001 = np.array([x0, y0, z1])
+    c101 = np.array([x1, y0, z1])
+    c111 = np.array([x1, y1, z1])
+    c011 = np.array([x0, y1, z1])
+    return [
+        [c000, c100, c110, c010],  # bottom
+        [c001, c101, c111, c011],  # top
+        [c000, c100, c101, c001],  # y = y0
+        [c010, c110, c111, c011],  # y = y1
+        [c000, c010, c011, c001],  # x = x0
+        [c100, c110, c111, c101],  # x = x1
+    ]
+
+
+def _draw_obstacle_walls(ax3d: Any, obstacles: Sequence[BoxObstacle]) -> None:
+    """Draw scene walls once (static). First wall gets the legend label."""
+    for i, ob in enumerate(obstacles):
+        faces = _box_obstacle_faces(ob)
+        coll = Poly3DCollection(
+            faces,
+            alpha=0.35,
+            facecolor="dimgray",
+            edgecolor="black",
+            linewidths=0.6,
+            label="wall" if i == 0 else None,
+        )
+        ax3d.add_collection3d(coll)
 
 
 def _beam_cone_mesh(
@@ -82,11 +131,12 @@ def build_animation(
     if not frames:
         raise ValueError("frames must be non-empty")
 
-    # 步骤1：堆叠序列 + 静态几何（AP/RIS）；预计算指向 p_plan 的示意锥
+    # 步骤1：堆叠序列 + 静态几何（AP/RIS/墙）；预计算指向 p_plan 的示意锥
     series = frames_to_arrays(frames)
     ap = get_ap_position()
     ris = get_ris_center()
     elems = get_ris_element_positions()
+    obstacles = default_scene_obstacles()
     p_true = series["p_true"]
     p_plan = series["p_plan"]
     t_idx = series["t"]
@@ -106,6 +156,8 @@ def build_animation(
         fontsize=12,
     )
 
+    _draw_obstacle_walls(ax3d, obstacles)
+
     ax3d.scatter(
         elems[:, 0], elems[:, 1], elems[:, 2], c="steelblue", s=6, depthshade=False
     )
@@ -117,19 +169,18 @@ def build_animation(
     )
 
     pad = 5.0
-    ax3d.set_xlim(
-        float(min(ap[0], p_true[:, 0].min()) - pad),
-        float(p_true[:, 0].max() + pad),
-    )
-    ax3d.set_ylim(
-        float(min(0.0, p_true[:, 1].min()) - pad),
-        float(p_true[:, 1].max() + pad),
-    )
+    xs = [float(ap[0]), float(p_true[:, 0].min()), float(p_true[:, 0].max())]
+    ys = [0.0, float(p_true[:, 1].min()), float(p_true[:, 1].max())]
+    for ob in obstacles:
+        xs.extend([ob.xmin, ob.xmax])
+        ys.extend([ob.ymin, ob.ymax])
+    ax3d.set_xlim(min(xs) - pad, max(xs) + pad)
+    ax3d.set_ylim(min(ys) - pad, max(ys) + pad)
     ax3d.set_zlim(0.0, max(12.0, float(ap[2]) + 2.0))
     ax3d.set_xlabel("x [m]")
     ax3d.set_ylabel("y [m]")
     ax3d.set_zlabel("z [m]")
-    ax3d.set_title("Scene (beam cone = illustrative)")
+    ax3d.set_title("Scene (walls + illustrative beam)")
 
     (traj_line,) = ax3d.plot([], [], [], c="0.5", lw=1.5, label="traj")
     (true_pt,) = ax3d.plot(

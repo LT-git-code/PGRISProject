@@ -41,7 +41,11 @@ DIRECT_PATH_ATTENUATION_OPEN: float = 1.0
 T_HIST: int = 20
 T_PRED: int = 10
 
-# --- Trajectory (synthetic stand-in for a motion planner) ---
+# --- Trajectory source ---
+# "arc" = legacy synthetic arc; "grid_planner" = 2D occupancy A* + resample
+TRAJ_SOURCE: str = "grid_planner"
+
+# --- Trajectory (synthetic arc stand-in; used when TRAJ_SOURCE == "arc") ---
 NUM_TIME_STEPS: int = 100
 ROBOT_Z_M: float = 1.0
 TRAJ_ARC_CX_M: float = 50.0
@@ -49,6 +53,26 @@ TRAJ_ARC_CY_M: float = 5.0
 TRAJ_ARC_RADIUS_M: float = 35.0
 TRAJ_THETA_START_RAD: float = -1.0
 TRAJ_THETA_END_RAD: float = 1.0
+
+# --- Grid motion planner (TRAJ_SOURCE == "grid_planner") ---
+# World-axis-aligned map covering AP / RIS / robot workspace (top-down x–y).
+GRID_X_MIN_M: float = 0.0
+GRID_X_MAX_M: float = 100.0
+GRID_Y_MIN_M: float = -5.0
+GRID_Y_MAX_M: float = 45.0
+GRID_RESOLUTION_M: float = 0.5
+PLANNER_ROBOT_RADIUS_M: float = 0.8
+PLAN_START_XY_M: tuple[float, float] = (15.0, 34.0)
+PLAN_GOAL_XY_M: tuple[float, float] = (85.0, 34.0)
+# Axis-aligned boxes: (xmin, xmax, ymin, ymax) in meters.
+# Wall A: between AP and workspace (NLoS-ready for direct AP→robot).
+# Wall B: blocks the straight high-y corridor so A* detours toward the RIS.
+OBSTACLE_BOXES_M: tuple[tuple[float, float, float, float], ...] = (
+    (20.0, 28.0, -5.0, 22.0),
+    (45.0, 55.0, 26.0, 42.0),
+)
+# Reserved for later spatial NLoS on the direct link (unused by planner).
+NLOS_USE_SPATIAL_VISIBILITY: bool = False
 
 # Legacy aliases
 ROBOT_X_START_M: float = 10.0
