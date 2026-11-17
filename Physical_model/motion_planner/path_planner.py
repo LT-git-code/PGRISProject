@@ -18,7 +18,7 @@ from Physical_model.motion_planner.grid_map import (
     world_to_cell,
 )
 
-# 8-connected moves: (dix, diy, cost)
+# 8-connected moves: (dix, diy, cost) 8邻域空间集定义
 _NEIGHBORS: tuple[tuple[int, int, float], ...] = (
     (-1, 0, 1.0),
     (1, 0, 1.0),
@@ -30,11 +30,12 @@ _NEIGHBORS: tuple[tuple[int, int, float], ...] = (
     (1, 1, float(np.sqrt(2.0))),
 )
 
-
+# 欧式距离
 def _heuristic(a: tuple[int, int], b: tuple[int, int]) -> float:
     return float(np.hypot(a[0] - b[0], a[1] - b[1]))
 
-
+# 函数作用是：如果用户传入的起点或终点不小心踩在了障碍物格里，代码不会直接报错崩溃，而是会自动向外螺线搜索最近的自由网格作为真正的起终点。
+# 函数通过螺旋式外扩搜索（曼哈顿距离层层向外扩展，最大半径 20 格），寻找离原始坐标最近的安全自由网格，保证算法能够顺利起步和收尾
 def _nearest_free(
     ix: int,
     iy: int,
@@ -56,7 +57,7 @@ def _nearest_free(
                     return jx, jy
     raise RuntimeError(f"no free cell near ({ix}, {iy})")
 
-
+#A*实现路径规划
 def plan_path_astar(
     grid: np.ndarray,
     start_xy: np.ndarray | tuple[float, float],
@@ -67,6 +68,7 @@ def plan_path_astar(
 
     中文简释：A* 搜索；输出世界坐标折线（至少含起终点）。
     """
+    #将世界坐标（米）转换成栅格坐标（像素/铬）
     sx, sy = world_to_cell(start_xy, spec)
     gx, gy = world_to_cell(goal_xy, spec)
     if not in_bounds(sx, sy, spec) or not in_bounds(gx, gy, spec):
@@ -74,39 +76,49 @@ def plan_path_astar(
     start = _nearest_free(sx, sy, grid, spec)
     goal = _nearest_free(gx, gy, grid, spec)
 
-    open_heap: list[tuple[float, int, tuple[int, int]]] = []
-    counter = 0
+    # 核心数据结构
+    open_heap: list[tuple[float, int, tuple[int, int]]] = [] #优先队列
+    counter = 0 #计数器
     heapq.heappush(open_heap, (0.0, counter, start))
-    came_from: dict[tuple[int, int], tuple[int, int] | None] = {start: None}
-    g_score: dict[tuple[int, int], float] = {start: 0.0}
+    came_from: dict[tuple[int, int], tuple[int, int] | None] = {start: None} #父节点指针字典,记录每一个节点是哪一个来的
+    g_score: dict[tuple[int, int], float] = {start: 0.0} #实际代价字典，从起点开始到当前仍意节点的实际开销
 
     while open_heap:
         _f, _c, current = heapq.heappop(open_heap)
+        #弹出最优节点，如果是终点，直接跳出循环
         if current == goal:
             break
         cx, cy = current
+        #遍历8邻域与防切角
         for dix, diy, step in _NEIGHBORS:
             nx, ny = cx + dix, cy + diy
             if not is_free(nx, ny, grid, spec):
                 continue
-            # Discourage cutting corners through occupied diagonals
+            # Discourage cutting corners through occupied diagonals（当机器人斜向移动的时候）
             if dix != 0 and diy != 0:
+                # 如果斜向不是自由空间，那么不会进入这里找路径节点
                 if (not is_free(cx + dix, cy, grid, spec)) or (
                     not is_free(cx, cy + diy, grid, spec)
                 ):
                     continue
+            # 当前节点到达邻居的新代价
             tentative = g_score[current] + step
             neigh = (nx, ny)
+            # 如果这个新代价比以往记录的代价更小（或者邻居从未被访问过），说明找到了更好的一条路：
             if tentative < g_score.get(neigh, float("inf")):
+                # 更新其父节点 came_from
                 came_from[neigh] = current
+                # 更新其 g_score
                 g_score[neigh] = tentative
+                #计算综合代价 f = g + h（其中 h 由欧几里得距离 _heuristic 提供）
                 f = tentative + _heuristic(neigh, goal)
                 counter += 1
+                # 压入优先队列
                 heapq.heappush(open_heap, (f, counter, neigh))
     else:
         raise RuntimeError("A* failed: no path from start to goal")
 
-    # Reconstruct
+    # Reconstruct 路径回溯
     cells: list[tuple[int, int]] = []
     node: tuple[int, int] | None = goal
     while node is not None:
@@ -114,6 +126,7 @@ def plan_path_astar(
         node = came_from[node]
     cells.reverse()
 
+    # 将栅格化路径再返还成世界模型（x,y）
     waypoints = [cell_to_world(ix, iy, spec) for ix, iy in cells]
     # Snap first/last to exact requested start/goal (still free-checked upstream)
     waypoints[0] = np.asarray(start_xy, dtype=float).reshape(2)
