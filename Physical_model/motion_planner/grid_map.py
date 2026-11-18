@@ -15,7 +15,7 @@ from Physical_model.motion_planner.obstacles import BoxObstacle
 @dataclass(frozen=True)
 class GridSpec:
     """Top-down x–y grid specification (meters)."""
-
+    """俯视x-y坐标时怎么栅格化分割，给A*使用，并非障碍物本身，栅格像素的大小，在配置中读取"""
     x_min: float
     x_max: float
     y_min: float

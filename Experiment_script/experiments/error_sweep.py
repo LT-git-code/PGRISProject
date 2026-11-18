@@ -30,7 +30,8 @@ from Physical_model.planner_traj import (
 
 class SweepRow(TypedDict):
     """One aggregated point on the error sweep curve.
-
+    记录单个噪声标准差sigma下，经多次蒙特卡洛（Monte Carlo）仿真和时间步平均后的聚合指标
+    （如平均位置误差、无 RIS、理想 RIS、预测 RIS 的平均 SNR 及标准差）。
     中文简释：扫描曲线上一个聚合点（某 sigma 下蒙卡+时间均值）。
     """
 
@@ -45,7 +46,9 @@ class SweepRow(TypedDict):
 
 
 class SweepResult(TypedDict):
-    """中文简释：完整扫描结果：rows + 对齐数组（绘图/CSV 用）。"""
+    """中文简释：完整扫描结果：rows + 对齐数组（绘图/CSV 用）。
+    将多行 SweepRow 打包，并整理成 NumPy 数组格式，方便后续直接用于画图（Plotting）或导出 CSV 报告。
+    """
 
     rows: list[SweepRow]
     # Arrays aligned with rows (convenient for plotting / CSV)
@@ -89,10 +92,11 @@ def run_error_sweep(
     if seed is None:
         seed = config.RANDOM_SEED
 
-    # 步骤1：生成固定计划轨迹 p_plan（各 sigma 共用）
+    # 用已有算法生成一条轨迹，轨迹有避障功能
     p_plan = generate_planner_trajectory(n_time_steps)
     rows: list[SweepRow] = []
 
+    #遍历每一个噪声标准差 sigma_f
     for sigma in error_stds:
         sigma_f = float(sigma)
         means_nr: list[float] = []

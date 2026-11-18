@@ -71,15 +71,18 @@ def plan_path_astar(
     #将世界坐标（米）转换成栅格坐标（像素/铬）
     sx, sy = world_to_cell(start_xy, spec)
     gx, gy = world_to_cell(goal_xy, spec)
+    #校验起点终点是否在像素格范围内
     if not in_bounds(sx, sy, spec) or not in_bounds(gx, gy, spec):
         raise ValueError("start or goal outside grid bounds")
+
+    #确保起点终点在界内
     start = _nearest_free(sx, sy, grid, spec)
     goal = _nearest_free(gx, gy, grid, spec)
 
     # 核心数据结构
-    open_heap: list[tuple[float, int, tuple[int, int]]] = [] #优先队列
+    open_heap: list[tuple[float, int, tuple[int, int]]] = []
     counter = 0 #计数器
-    heapq.heappush(open_heap, (0.0, counter, start))
+    heapq.heappush(open_heap, (0.0, counter, start))#堆（优先队列）
     came_from: dict[tuple[int, int], tuple[int, int] | None] = {start: None} #父节点指针字典,记录每一个节点是哪一个来的
     g_score: dict[tuple[int, int], float] = {start: 0.0} #实际代价字典，从起点开始到当前仍意节点的实际开销
 

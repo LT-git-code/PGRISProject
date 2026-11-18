@@ -46,7 +46,7 @@ T_PRED: int = 10
 TRAJ_SOURCE: str = "grid_planner"
 
 # --- Trajectory (synthetic arc stand-in; used when TRAJ_SOURCE == "arc") ---
-NUM_TIME_STEPS: int = 100
+NUM_TIME_STEPS: int = 100 # 默认轨迹有100个时间点
 ROBOT_Z_M: float = 1.0
 TRAJ_ARC_CX_M: float = 50.0
 TRAJ_ARC_CY_M: float = 5.0
@@ -61,7 +61,9 @@ GRID_X_MAX_M: float = 100.0
 GRID_Y_MIN_M: float = -5.0
 GRID_Y_MAX_M: float = 45.0
 GRID_RESOLUTION_M: float = 0.5
+#障碍物膨胀大小
 PLANNER_ROBOT_RADIUS_M: float = 0.8
+#栅格坐标下的起点和终点
 PLAN_START_XY_M: tuple[float, float] = (15.0, 34.0)
 PLAN_GOAL_XY_M: tuple[float, float] = (85.0, 34.0)
 # Axis-aligned boxes: (xmin, xmax, ymin, ymax) in meters.

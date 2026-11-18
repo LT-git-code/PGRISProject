@@ -15,12 +15,13 @@ from Physical_model import config
 @dataclass(frozen=True)
 class BoxObstacle:
     """Axis-aligned box in the x–y plane (z ignored for planning)."""
-
+    """场景内轴对齐的长方体障碍物(暂时不考虑Z轴)"""
     xmin: float
     xmax: float
     ymin: float
     ymax: float
 
+    #inflate为向外扩展一圈
     def contains_xy(self, x: float, y: float, *, inflate: float = 0.0) -> bool:
         """中文简释：点是否落在膨胀后的盒子内。"""
         return (

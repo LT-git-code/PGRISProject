@@ -44,6 +44,7 @@ def _generate_arc_trajectory(T: int) -> np.ndarray:
     z = np.full(T, config.ROBOT_Z_M, dtype=float)
     return np.column_stack([x, y, z])
 
+#T 时间戳
 
 def generate_planner_trajectory(
     T: int | None = None,
