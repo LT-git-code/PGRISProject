@@ -2,7 +2,7 @@
 
 中文职责：将 Stage-2 扫描结果导出为 CSV（供论文/后处理）。
 输入：SweepResult；输出：utf-8 CSV 文件路径。
-在流程中的位置：run_stage2 在扫描之后调用；不参与配相/信道。
+在流程中的位置：run_planner_ris_snr_error_sweep 在扫描之后调用；不参与配相/信道。
 """
 
 from __future__ import annotations

@@ -10,7 +10,7 @@ planner_pose_error_m = ||p_true - p_plan||_2 (not ML ADE/FDE).
 中文职责：Stage-2 误差扫描——对不同执行噪声 sigma 求三模式均值 SNR。
 输入：error_std 列表、蒙卡次数、轨迹长度；
 输出：每个 sigma 一行：mean_planner_pose_error_m 与各模式 SNR_dB。
-在流程中的位置：run_stage2 调用；横轴用实测 ||p_true-p_plan||，非 ML ADE/FDE。
+在流程中的位置：run_planner_ris_snr_error_sweep 调用；横轴用实测 ||p_true-p_plan||，非 ML ADE/FDE。
 注意：配相用 p_plan，评估用 p_true（经 modes.simulate_modes）；无 ML。
 """
 

@@ -103,6 +103,7 @@ PLOT_LABEL_NO_RIS: str = "no_ris"
 
 # --- Planner pose error (execution vs plan) ---
 PLANNER_POSE_ERROR_STD_M: float = 0.0
+ERROR_BASELINE_STD_M: float = 0.5
 ERROR_SWEEP_STD_M: tuple[float, ...] = (0.0, 0.1, 0.3, 0.5, 1.0, 2.0)
 ERROR_SWEEP_N_MONTE_CARLO: int = 8
 ERROR_SWEEP_NUM_TIME_STEPS: int = 40
@@ -116,6 +117,7 @@ PLOT_LABEL_PLANNER_RIS: str = "planner_ris"
 
 # --- Stage-1 outputs ---
 STAGE1_BASELINE_PLOT: str = "snr_planner_baseline.png"
+STAGE1_ERROR_BASELINE_PLOT: str = "snr_error_baseline.png"
 STAGE1_SUMMARY_TXT: str = "stage1_summary.txt"
 
 # --- Stage-2 outputs ---
